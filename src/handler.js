@@ -3,16 +3,13 @@ const { books } = require("./bookshelf");
 
 const addBookHandler = (request, h) => {
   const { name, year, author, summary, publisher, pageCount, readPage, reading } = request.payload;
-
-  const bookId = nanoid(16);
+  const id = nanoid(16);
   const insertedAt = new Date().toISOString();
   const updatedAt = insertedAt;
   const finished = pageCount === readPage;
-
   const requiredFields = ["name", "year", "author", "summary", "publisher", "pageCount", "readPage", "reading"];
-
   for (const field of requiredFields) {
-    if (!request.payload[field]) {
+    if (request.payload[field] === undefined) {
       return h
         .response({
           status: "fail",
@@ -21,7 +18,6 @@ const addBookHandler = (request, h) => {
         .code(400);
     }
   }
-
   if (readPage > pageCount) {
     return h
       .response({
@@ -30,7 +26,6 @@ const addBookHandler = (request, h) => {
       })
       .code(400);
   }
-
   const book = {
     name,
     year,
@@ -40,20 +35,18 @@ const addBookHandler = (request, h) => {
     pageCount,
     readPage,
     reading,
-    bookId,
+    id,
     insertedAt,
     updatedAt,
     finished,
   };
-
   books.push(book);
-
   return h
     .response({
       status: "success",
       message: "Buku berhasil ditambahkan",
       data: {
-        bookId
+        bookId: id,
       },
     })
     .code(201);
@@ -65,28 +58,24 @@ const getAllBooksHandler = (request, h) => {
       status: "success",
       data: {
         books: books.map((book) => ({
-          id: book.bookId,
+          id: book.id,
           name: book.name,
           publisher: book.publisher,
         })),
       },
     })
     .code(200);
-
 };
 
 const getBookDetailHandler = (request, h) => {
   const { bookId } = request.params;
-
-  const book = books.find((b) => b.bookId === bookId);
-
+  const book = books.filter((b) => b.id === bookId)[0];
   if (book) {
     return h
       .response({
         status: "success",
         data: {
           book,
-          id: book.bookId,
         },
       })
       .code(200);
